@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Registration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Candidate Registration</h1>
+        <form id="candidateForm">
+            <label for="name">Candidate Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="affiliation">Affiliation:</label>
+            <input type="text" id="affiliation" name="affiliation" required>
+
+            <button type="submit">Add Candidate</button>
+        </form>
+        <h2>Registered Candidates</h2>
+        <ul id="candidateList"></ul>
+    </div>
+
+    <script src="candidate-registration.js"></script>
+</body>
+</html>
