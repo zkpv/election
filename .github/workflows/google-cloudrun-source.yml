@@ -1,0 +1,75 @@
+# This workflow will build a container image using Cloud Build and deploy it to Cloud Run
+# when a commit is pushed to the "main" branch.
+#
+# To configure this workflow:
+#
+# 1. Enable the following Google Cloud APIs:
+#
+#    - Artifact Registry (artifactregistry.googleapis.com)
+#    - Cloud Build (cloudbuild.googleapis.com)
+#    - Cloud Run (run.googleapis.com)
+#    - IAM Credentials API (iamcredentials.googleapis.com)
+#
+# 2. Create and configure a Workload Identity Provider for GitHub:
+#    https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation.
+#
+# 3. Grant the Workload Identity Provider the following IAM roles:
+#
+#    - Artifact Registry Writer (roles/artifactregistry.writer)
+#    - Cloud Run Admin (roles/run.admin)
+#
+# 4. Change the values in the "env" block to match your values.
+
+name: 'Deploy Voting DApp to Cloud Run'
+
+on:
+  push:
+    branches:
+      - 'main'
+
+env:
+  PROJECT_ID: 'your-gcp-project-id'  # Update with your GCP project ID
+  REGION: 'your-gcp-region'          # Update with your preferred region
+  SERVICE: 'voting-dapp'           # Update with your desired service name
+  IMAGE_NAME: 'voting-dapp-image' # Update with your desired image name
+
+jobs:
+  build-and-deploy:
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      # Configure Workload Identity Federation and generate an access token.
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/your-gcp-project-id/locations/global/workloadIdentityPools/your-pool/providers/your-provider' # Update with your Workload Identity Provider
+
+      # Build the container image using Cloud Build
+      - name: 'Build Container Image'
+        uses: 'google-github-actions/build-cloudrun@v2'
+        with:
+          service: '${{ env.SERVICE }}'
+          region: '${{ env.REGION }}'
+          source: './'
+          image: 'us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}' # Update with your Artifact Registry location
+
+      # Deploy the container image to Cloud Run
+      - name: 'Deploy to Cloud Run'
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: '${{ env.SERVICE }}'
+          region: '${{ env.REGION }}'
+          image: 'us-central1-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest' # Update with your Artifact Registry location
+
+      # Display the Cloud Run service URL
+      - name: 'Show output'
+        run: |-
+          echo "Service URL: ${{ steps.deploy.outputs.url }}"
